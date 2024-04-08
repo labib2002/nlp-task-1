@@ -1,0 +1,44 @@
+import requests
+from bs4 import BeautifulSoup
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+import re
+
+# Download
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+def get_unique_lemmas_from_url(url):
+
+    response = requests.get(url)
+    response.raise_for_status()  # Check for HTTP errors
+
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    # Get text content from paragraphs 
+    text = ''.join([p.get_text() for p in soup.find_all('p')])
+
+    # Extract words using regex 
+    tokens = re.findall(r'\b\w+\b', text) 
+
+    # Remove non-alphabetic tokens and convert to lowercase
+    alpha_tokens = [word.lower() for word in tokens if word.isalpha()]
+
+    # Lemmatize words
+    lemmatizer = WordNetLemmatizer()
+    lemmas = [lemmatizer.lemmatize(token) for token in alpha_tokens]
+
+    # Remove stop words
+    stop_words = set(stopwords.words('english'))
+    filtered_lemmas = [lemma for lemma in lemmas if lemma not in stop_words]
+
+    # Get unique lemmas
+    unique_lemmas = list(set(filtered_lemmas))
+
+    return unique_lemmas
+
+url = "https://en.wikipedia.org/wiki/world" 
+unique_lemmas = get_unique_lemmas_from_url(url)
+print(unique_lemmas)
